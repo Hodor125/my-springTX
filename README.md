@@ -1,2 +1,2 @@
 # my-springTX
-实现简化spring事务
+实现简单spring事务
