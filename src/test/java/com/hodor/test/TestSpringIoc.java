@@ -5,6 +5,7 @@ import com.hodor.controller.OrderController;
 import com.hodor.service.OrderService;
 import org.junit.Test;
 import org.springframework.container.ClassPathXmlApplicationContext;
+import org.springframework.xml.DbConfigParser;
 
 /**
  * @author ：hodor007
@@ -18,10 +19,14 @@ public class TestSpringIoc {
     public void test1() {
         ClassPathXmlApplicationContext context = new ClassPathXmlApplicationContext("applicationContext.xml");
         OrderController orderController = (OrderController) context.getBean(OrderController.class);
-        orderController.findOrders();
-        orderController.addOrder();
+//        orderController.findOrders();
+//        orderController.addOrder();
+
+        //测试直接调用sercie，可以触发AOP
 //        OrderService myService = (OrderService) context.getBean("myService");
 //        int i = myService.addOrder(new Order(113, "锤子", "2020-11-20", 12821));
 //        System.out.println("结果：" + i);
+
+        orderController.transfer("张三", "李四", 500.0);
     }
 }

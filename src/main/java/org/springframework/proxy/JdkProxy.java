@@ -58,7 +58,7 @@ public class JdkProxy<T> {
             //
             @Override
             public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-                //调用目标对象的目标方法
+                //调用目标对象的目标方法（调用调用AOP切面类的方法，在AOP切面类方法中调用自己的方法）
                 if(methodName.equals(method.getName())) {
                     ProceedingJoinPoint joinPoint = new ProceedingJoinPoint(method, targetObject, args);
                     return aopMethod.invoke(aopClass.newInstance(), joinPoint);

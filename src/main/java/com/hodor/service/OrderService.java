@@ -15,4 +15,6 @@ public interface OrderService {
 
     //给这个方法织入AOP
     int addOrder(Order order);
+
+    int transfer(String fromName, String toName, double Money);
 }

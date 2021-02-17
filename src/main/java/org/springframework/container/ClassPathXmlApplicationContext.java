@@ -1,6 +1,7 @@
 package org.springframework.container;
 
 import org.springframework.annotation.*;
+import org.springframework.proxy.CglibProxy;
 import org.springframework.proxy.JdkProxy;
 import org.springframework.xml.SpringConfigPaser;
 
@@ -144,100 +145,70 @@ public class ClassPathXmlApplicationContext {
                 if(c.isAnnotationPresent(Controller.class) || c.isAnnotationPresent(Service.class) || c.isAnnotationPresent(Repository.class)) {
                     //实例化
                     Object instance = c.newInstance();
-                    Controller controllerAnno = c.getAnnotation(Controller.class);
-                    if(controllerAnno != null) {
-                        String value = controllerAnno.value();
-                        String simpleName = "";
-                        //如果注解有值就使用指定的值作为名字创建对象
-                        if(value == null || "".equals(value)) {
-                            simpleName = c.getSimpleName();
-                            simpleName = simpleName.toLowerCase().charAt(0) + simpleName.substring(1);
-                        } else {
-                            simpleName = value;
-                        }
-//                        System.out.println("simpleName<=======>" + simpleName);
-                        //扩展可以使用三种不同的方式获取对象
-                        //通过对象名字获取对象，重复的对象名就报错
-                        if(iocNameContainer.containsKey(simpleName)) {
-                            throw new Exception("The bean name had already existed in the container");
-                        }
-                        iocNameContainer.put(simpleName, instance);
-                        //通过class文件过去对象
-                        iocContainer.put(c, instance);
 
-                        //通过接口获取对象
-                        Class<?>[] interfaces = c.getInterfaces();
-                        for (Class<?> anInterface : interfaces) {
-                            List<Object> byInterface = iocInterface.get(anInterface);
-                            if(byInterface != null) {
-                                byInterface.add(instance);
-                                iocInterface.put(anInterface, byInterface);
-                            } else {
-                                List<Object> byInstance = new ArrayList<>();
-                                byInstance.add(instance);
-                                iocInterface.put(anInterface, byInstance);
+                    //判断类方法中是否有带注解@Transactional的，需要事务控制
+                    List<String> declaredMethods = new ArrayList<>();
+                    Method[] methods = c.getDeclaredMethods();
+                    if(methods != null && methods.length > 0) {
+                        for (Method method : methods) {
+                            if(method.isAnnotationPresent(Transactional.class)) {
+                                declaredMethods.add(method.getName());
                             }
                         }
+
+                        //这些方法需要事务
+                        if(declaredMethods.size() > 0) {
+                            CglibProxy cglibProxy = new CglibProxy(c, declaredMethods);
+                            //获取Cglib动态代理的对象
+                            instance = cglibProxy.getProxyInstance();
+                        }
+                    }
+
+                    String value = null;
+                    Controller controllerAnno = c.getAnnotation(Controller.class);
+                    if(controllerAnno != null) {
+                        value = controllerAnno.value();
                     }
 
                     Service serviceAnnotation = c.getAnnotation(Service.class);
                     if(serviceAnnotation != null) {
-                        String simpleName = "";
-                        String value = serviceAnnotation.value();
-                        if(value == null || "".equals(value)) {
-                            simpleName = c.getSimpleName();
-                            simpleName = simpleName.toLowerCase().charAt(0) + simpleName.substring(1);
-                        } else {
-                            simpleName = value;
-                        }
-//                        System.out.println("simpleName<=======>" + simpleName);
-                        if(iocNameContainer.containsKey(simpleName)) {
-                            throw new Exception("The bean name had already existed in the container");
-                        }
-                        iocNameContainer.put(simpleName, instance);
-                        iocContainer.put(c, instance);
-
-                        Class<?>[] interfaces = c.getInterfaces();
-                        for (Class<?> anInterface : interfaces) {
-                            List<Object> byInterface = iocInterface.get(anInterface);
-                            if(byInterface != null) {
-                                byInterface.add(instance);
-                                iocInterface.put(anInterface, byInterface);
-                            } else {
-                                List<Object> byInstance = new ArrayList<>();
-                                byInstance.add(instance);
-                                iocInterface.put(anInterface, byInstance);
-                            }
-                        }
+                        value = serviceAnnotation.value();
                     }
 
                     Repository repositoryAnno = c.getAnnotation(Repository.class);
                     if(repositoryAnno != null) {
-                        String simpleName = "";
-                        String value = repositoryAnno.value();
-                        if(value == null || "".equals(value)) {
-                            simpleName = c.getSimpleName();
-                            simpleName = simpleName.toLowerCase().charAt(0) + simpleName.substring(1);
-                        } else {
-                            simpleName = value;
-                        }
-                        if(iocNameContainer.containsKey(simpleName)) {
-                            throw new Exception("The bean name had already existed in the container");
-                        }
-                        iocNameContainer.put(simpleName, instance);
-                        iocContainer.put(c, instance);
+                        value = repositoryAnno.value();
+                    }
 
-                        Class<?>[] interfaces = c.getInterfaces();
-                        for (Class<?> anInterface : interfaces) {
-                            List<Object> byInterface = iocInterface.get(anInterface);
-                            if(byInterface != null) {
-                                byInterface.add(instance);
-                                iocInterface.put(anInterface, byInterface);
-                            } else {
-                                List<Object> byInstance = new ArrayList<>();
-                                byInstance.add(instance);
-                                iocInterface.put(anInterface, byInstance);
-                            }
+                    String simpleName = "";
+                    //如果注解有值就使用指定的值作为名字创建对象
+                    if(value == null || "".equals(value)) {
+                        simpleName = c.getSimpleName();
+                        simpleName = simpleName.toLowerCase().charAt(0) + simpleName.substring(1);
+                    } else {
+                        simpleName = value;
+                    }
+//                        System.out.println("simpleName<=======>" + simpleName);
+                    //扩展可以使用三种不同的方式获取对象
+                    //通过对象名字获取对象，重复的对象名就报错
+                    if(iocNameContainer.containsKey(simpleName)) {
+                        throw new Exception("The bean name had already existed in the container");
+                    }
+                    iocNameContainer.put(simpleName, instance);
+                    //通过class文件过去对象
+                    iocContainer.put(c, instance);
+
+                    //通过接口获取对象
+                    Class<?>[] interfaces = c.getInterfaces();
+                    for (Class<?> anInterface : interfaces) {
+                        List<Object> byInterface = iocInterface.get(anInterface);
+                        if(byInterface != null) {
+                            byInterface.add(instance);
+                            iocInterface.put(anInterface, byInterface);
+                        } else {
+                            List<Object> byInstance = new ArrayList<>();
+                            byInstance.add(instance);
+                            iocInterface.put(anInterface, byInstance);
                         }
                     }
                 }

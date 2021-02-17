@@ -14,4 +14,6 @@ public interface OrderDao {
     List<Order> findOrders();
 
     int addOrder(Order order);
+
+    int transfer(String name, Double money);
 }

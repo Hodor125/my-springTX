@@ -30,4 +30,9 @@ public class OrderServiceImpl2 implements OrderService {
         System.out.println("新增订单......");
         return 0;
     }
+
+    @Override
+    public int transfer(String fromName, String toName, double Money) {
+        return 0;
+    }
 }

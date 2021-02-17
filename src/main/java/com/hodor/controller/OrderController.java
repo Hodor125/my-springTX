@@ -27,4 +27,8 @@ public class OrderController {
         int i = orderService.addOrder(new Order(114, "小米", "2020-11-20", 12800));
 
     }
+
+    public void transfer(String fromName, String toName, double money) {
+        int transfer = orderService.transfer(fromName, toName, money);
+    }
 }
